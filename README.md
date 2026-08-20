@@ -6,12 +6,9 @@ A small, project-agnostic Nix library for reading `variables:` blocks out of
 YAML files (GitLab CI templates, docker-compose files, plain YAML, ...) and
 turning them into a flat attrset of strings, e.g. for devenv's `env`.
 
-It makes no assumptions about file layout: every path is passed in by the
-caller.
-
 ## Usage
 
-With devenv, add to `devenv.yaml`:
+With [devenv](https://github.com/cachix/devenv), add to `devenv.yaml`:
 
 ```yaml
 inputs:
@@ -31,7 +28,9 @@ in
   # merge the `variables:` blocks of several files, then expand
   # $FOO / ${FOO} references
   env = yamlVars.load {
+    # NOTE: later ones override earlier ones
     files = [ ./ci/env/base.yaml ./ci/env/dev.yaml ];
+    # Extra values have highest priority and are also used for variable resolution
     extra = { AWS_ACCOUNT_ID = "1234567890"; };
   };
 }
@@ -51,11 +50,11 @@ in
 
 ### `load` options
 
-- `files` — list of YAML files, later ones override earlier ones.
-- `extra` — attrset merged last, for values only known outside of CI.
-- `attrPath` — where the variables live inside each file (default `[ "variables" ]`).
-- `keepEmpty` — keep variables that expand to `""` (default: drop them).
-- `expandRefs` — perform `$VAR` expansion (default: `true`).
+- `files`: list of YAML files, later ones override earlier ones.
+- `extra`: attrset merged last, for values only known outside of CI.
+- `attrPath`: where the variables live inside each file (default `[ "variables" ]`).
+- `keepEmpty`: keep variables that expand to `""` (default: drop them).
+- `expandRefs`: perform `$VAR` expansion (default: `true`).
 
 The library-level `defaultAttrPath` argument changes the default `attrPath`
 for all entry points:
