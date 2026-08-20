@@ -40,4 +40,4 @@ jobs:
             experimental-features = nix-command flakes
 
       - name: Check formatting
-        run: nix fmt -- --check .
+        run: nix fmt -- --ci

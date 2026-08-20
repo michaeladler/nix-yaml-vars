@@ -57,11 +57,12 @@ let
 
     # Order of definition must not matter (fixed-point iteration).
     testExpandOutOfOrder = {
-      expr = (yamlVars.expand {
-        Z = "$Y";
-        Y = "$X";
-        X = "deep";
-      }).Z;
+      expr =
+        (yamlVars.expand {
+          Z = "$Y";
+          Y = "$X";
+          X = "deep";
+        }).Z;
       expected = "deep";
     };
 
@@ -111,26 +112,29 @@ let
 
     # EMPTY is dropped by default, kept with keepEmpty.
     testLoadKeepEmpty = {
-      expr = (yamlVars.load {
-        files = [ sample ];
-        keepEmpty = true;
-      }).EMPTY;
+      expr =
+        (yamlVars.load {
+          files = [ sample ];
+          keepEmpty = true;
+        }).EMPTY;
       expected = "";
     };
 
     testLoadExtraWinsLast = {
-      expr = (yamlVars.load {
-        files = [ sample ];
-        extra.APP = "from-extra";
-      }).APP;
+      expr =
+        (yamlVars.load {
+          files = [ sample ];
+          extra.APP = "from-extra";
+        }).APP;
       expected = "from-extra";
     };
 
     testLoadNoExpand = {
-      expr = (yamlVars.load {
-        files = [ sample ];
-        expandRefs = false;
-      }).BUCKET;
+      expr =
+        (yamlVars.load {
+          files = [ sample ];
+          expandRefs = false;
+        }).BUCKET;
       expected = "$APP-\${REGION}-state";
     };
   };

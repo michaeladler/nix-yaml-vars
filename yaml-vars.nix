@@ -41,7 +41,9 @@ let
     path:
     let
       base = baseNameOf (toString path);
-      cleaned = lib.replaceStrings [ " " ] [ "-" ] (lib.removeSuffix ".yaml" (lib.removeSuffix ".yml" base));
+      cleaned = lib.replaceStrings [ " " ] [ "-" ] (
+        lib.removeSuffix ".yaml" (lib.removeSuffix ".yml" base)
+      );
     in
     if cleaned == "" then "yaml" else cleaned;
 
