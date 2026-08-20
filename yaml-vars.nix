@@ -41,11 +41,12 @@ let
     path:
     let
       base = baseNameOf (toString path);
-      cleaned = lib.replaceStrings [ " " ] [ "-" ] (
-        lib.removeSuffix ".yaml" (lib.removeSuffix ".yml" base)
-      );
+      stripped = lib.removeSuffix ".yaml" (lib.removeSuffix ".yml" base);
+      # sanitizeDerivationName handles every store-illegal character
+      # (spaces, ':', '#', '?', leading '.', ...), not just spaces.
+      cleaned = lib.strings.sanitizeDerivationName stripped;
     in
-    if cleaned == "" then "yaml" else cleaned;
+    if stripped == "" || cleaned == "unknown" then "yaml" else cleaned;
 
   # YAML file -> Nix attrset (IFD)
   fromYAML' =
@@ -98,7 +99,7 @@ let
           step
         else if n <= 0 then
           throw ''
-            ci-vars: variable expansion did not stabilise after 100 iterations.
+            nix-yaml-vars: variable expansion did not stabilise after 100 iterations.
             Likely a circular $VAR reference among: ${lib.concatStringsSep ", " unstable}
           ''
         else
