@@ -4,7 +4,7 @@
 }:
 
 let
-  yamlVars = import ./yaml-vars.nix { inherit pkgs lib; };
+  yamlVars = import ./. { inherit pkgs lib; };
 
   # tryEval is shallow: force the whole value so a throw inside an attribute
   # is actually caught.

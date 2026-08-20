@@ -23,7 +23,7 @@
           lib ? pkgs.lib,
           defaultAttrPath ? [ "variables" ],
         }:
-        import ./yaml-vars.nix { inherit pkgs lib defaultAttrPath; };
+        import ./. { inherit pkgs lib defaultAttrPath; };
 
       checks = forAllSystems (pkgs: {
         tests = import ./tests.nix { inherit pkgs; };
