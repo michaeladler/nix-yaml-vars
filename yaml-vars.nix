@@ -65,47 +65,37 @@ let
 
   varsOf = varsAt defaultAttrPath;
 
-  # Expand ${FOO} / $FOO references against an attrset, iterating until stable
-  # (values may reference other values). Unknown names expand to "".
-  expandOnce =
-    vars: s:
-    builtins.concatStringsSep "" (
-      map (
-        part:
-        if builtins.isList part then
-          (
-            let
-              name = lib.head (lib.filter (x: x != null) part);
-            in
-            toStr (vars.${name} or "")
-          )
-        else
-          part
-      ) (builtins.split "[$][{]([A-Za-z_][A-Za-z0-9_]*)[}]|[$]([A-Za-z_][A-Za-z0-9_]*)" s)
-    );
-
-  # Fixed-point expansion. Bounded so self-referential values cannot loop
-  # forever; a value that never stabilises is a cycle and is an eval error.
+  # Expand ${FOO} / $FOO references against an attrset. Values may reference
+  # other values; each reference is resolved recursively, so definition order
+  # does not matter. Unknown names expand to "". A reference cycle is an eval
+  # error, detected as soon as a name refers back to itself.
   expand =
     vars:
     let
-      go =
-        n: v:
-        let
-          step = lib.mapAttrs (_: x: expandOnce v x) v;
-          unstable = lib.attrNames (lib.filterAttrs (k: x: x != v.${k}) step);
-        in
-        if step == v then
-          step
-        else if n <= 0 then
+      v = lib.mapAttrs (_: toStr) vars;
+
+      # `stack` is the chain of names currently being resolved.
+      expandStr =
+        stack: s:
+        builtins.concatStringsSep "" (
+          map (
+            part:
+            if builtins.isList part then resolve stack (lib.head (lib.filter (x: x != null) part)) else part
+          ) (builtins.split "[$][{]([A-Za-z_][A-Za-z0-9_]*)[}]|[$]([A-Za-z_][A-Za-z0-9_]*)" s)
+        );
+
+      resolve =
+        stack: name:
+        if builtins.elem name stack then
           throw ''
-            nix-yaml-vars: variable expansion did not stabilise after 100 iterations.
-            Likely a circular $VAR reference among: ${lib.concatStringsSep ", " unstable}
+            nix-yaml-vars: circular $VAR reference: ${lib.concatStringsSep " -> " (stack ++ [ name ])}
           ''
+        else if v ? ${name} then
+          expandStr (stack ++ [ name ]) v.${name}
         else
-          go (n - 1) step;
+          "";
     in
-    go 100 (lib.mapAttrs (_: toStr) vars);
+    lib.mapAttrs (k: s: expandStr [ k ] s) v;
 
   toStr =
     v:

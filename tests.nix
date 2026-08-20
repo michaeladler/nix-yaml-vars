@@ -6,6 +6,10 @@
 let
   yamlVars = import ./yaml-vars.nix { inherit pkgs lib; };
 
+  # tryEval is shallow: force the whole value so a throw inside an attribute
+  # is actually caught.
+  deepEval = x: builtins.deepSeq x x;
+
   sample = pkgs.writeText "sample.yml" ''
     variables:
       APP: demo
@@ -70,6 +74,49 @@ let
     testExpandUnknown = {
       expr = (yamlVars.expand { A = "x$NOPE.y"; }).A;
       expected = "x.y";
+    };
+
+    # A self-referential value is an eval error, not a hang.
+    testExpandSelfCycleThrows = {
+      expr = (builtins.tryEval (deepEval (yamlVars.expand { A = "$A"; }))).success;
+      expected = false;
+    };
+
+    # ... and so is a longer cycle.
+    testExpandIndirectCycleThrows = {
+      expr =
+        (builtins.tryEval (
+          deepEval (
+            yamlVars.expand {
+              A = "$B";
+              B = "$C";
+              C = "$A";
+            }
+          )
+        )).success;
+      expected = false;
+    };
+
+    # Only the tainted attrs throw; independent ones still evaluate.
+    testExpandCycleDoesNotPoisonOthers = {
+      expr =
+        (yamlVars.expand {
+          A = "$A";
+          OK = "fine";
+        }).OK;
+      expected = "fine";
+    };
+
+    # Repeating a name across separate branches is not a cycle.
+    testExpandDiamondIsNotACycle = {
+      expr =
+        (yamlVars.expand {
+          ROOT = "r";
+          L = "$ROOT-l";
+          R = "$ROOT-r";
+          TOP = "$L/$R";
+        }).TOP;
+      expected = "r-l/r-r";
     };
 
     testFromYAML = {
