@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    "group:all",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "schedule:daily",
+     ":prConcurrentLimitNone",
+    ":prHourlyLimitNone",
+    ":semanticCommitTypeAll(chore)",
+    ":semanticCommits"
+  ],
+  "automerge": true,
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "nix": {
+    "enabled": true
+  },
+  "assigneesFromCodeOwners": true,
+  "separateMajorMinor": false
+}
