@@ -40,12 +40,13 @@ in
 
 | Entry point                                              | Description                                               |
 |----------------------------------------------------------|-----------------------------------------------------------|
-| `load { files, extra, attrPath, keepEmpty, expandRefs }` | Main entry point: merge, expand, filter.                  |
+| `load { files, extra, attrPath, keepEmpty, expandRefs, strict }` | Main entry point: merge, expand, filter.           |
 | `mergeFiles { files, attrPath }`                         | Merge variable blocks of several files (later files win). |
 | `fromYAML ./anything.yml`                                | Whole YAML file -> attrset.                               |
 | `varsOf ./ci/templates/base.yml`                         | `variables:` block of one file.                           |
 | `varsAt [ "x" "env" ] ./f.yml`                           | Variable block at a custom attribute path.                |
 | `expand { A = "$B"; B = "1"; }`                          | Reference expansion only.                                 |
+| `expandWith false { A = "$B"; }`                         | Reference expansion with an explicit `strict` flag.       |
 | `toStr v`                                                | Coerce a scalar (bool/int/null/...) to a string.          |
 
 ### `load` options
@@ -55,14 +56,16 @@ in
 - `attrPath`: where the variables live inside each file (default `[ "variables" ]`).
 - `keepEmpty`: keep variables that expand to `""` (default: drop them).
 - `expandRefs`: perform `$VAR` expansion (default: `true`).
+- `strict`: fail on references to undefined variables (default: `true`).
 
-The library-level `defaultAttrPath` argument changes the default `attrPath`
-for all entry points:
+The library-level `defaultAttrPath` and `defaultStrict` arguments change the
+defaults for all entry points:
 
 ```nix
 yamlVars = nix-yaml-vars.lib {
   inherit pkgs;
   defaultAttrPath = [ "x" "variables" ];
+  defaultStrict = false;
 };
 ```
 
@@ -72,7 +75,8 @@ yamlVars = nix-yaml-vars.lib {
 - Values may reference other values in any order; expansion iterates to a
   fixed point (bounded at 100 iterations, so circular references are an
   eval error naming the offending variables rather than a hang).
-- Unknown names expand to `""`.
+- Unknown names are an eval error naming the offending variable (strict mode,
+  the default); with `strict = false` they expand to `""`.
 - Non-string scalars (ints, bools, `null`) are coerced to strings.
 
 ## Note on import-from-derivation

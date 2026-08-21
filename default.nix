@@ -31,6 +31,8 @@
   # name of the attribute holding the variable block; may also be a list of
   # attribute names for nested locations (e.g. [ "x" "variables" ]).
   defaultAttrPath ? [ "variables" ],
+  # fail on references to undefined variables instead of expanding them to ""
+  defaultStrict ? true,
 }:
 
 let
@@ -67,10 +69,11 @@ let
 
   # Expand ${FOO} / $FOO references against an attrset. Values may reference
   # other values; each reference is resolved recursively, so definition order
-  # does not matter. Unknown names expand to "". A reference cycle is an eval
-  # error, detected as soon as a name refers back to itself.
-  expand =
-    vars:
+  # does not matter. In strict mode an unknown name is an eval error, otherwise
+  # it expands to "". A reference cycle is an eval error, detected as soon as a
+  # name refers back to itself.
+  expandWith =
+    strict: vars:
     let
       v = lib.mapAttrs (_: toStr) vars;
 
@@ -92,10 +95,16 @@ let
           ''
         else if v ? ${name} then
           expandStr (stack ++ [ name ]) v.${name}
+        else if strict then
+          throw ''
+            nix-yaml-vars: undefined variable ''$${name}, referenced from ${lib.concatStringsSep " -> " stack}
+          ''
         else
           "";
     in
     lib.mapAttrs (k: s: expandStr [ k ] s) v;
+
+  expand = expandWith defaultStrict;
 
   toStr =
     v:
@@ -117,6 +126,7 @@ rec {
     varsAt
     varsOf
     expand
+    expandWith
     toStr
     ;
 
@@ -136,6 +146,7 @@ rec {
     attrPath   : where the variables live inside each file
     keepEmpty  : keep variables that expand to "" (default: drop them)
     expandRefs : perform $VAR expansion (default: true)
+    strict     : fail on references to undefined variables (default: true)
   */
   load =
     {
@@ -144,10 +155,11 @@ rec {
       attrPath ? defaultAttrPath,
       keepEmpty ? false,
       expandRefs ? true,
+      strict ? defaultStrict,
     }:
     let
       raw = mergeFiles { inherit files attrPath; } // lib.mapAttrs (_: toStr) extra;
-      expanded = if expandRefs then expand raw else raw;
+      expanded = if expandRefs then expandWith strict raw else raw;
     in
     if keepEmpty then expanded else lib.filterAttrs (_: v: v != "") expanded;
 }

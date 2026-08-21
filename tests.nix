@@ -70,9 +70,49 @@ let
       expected = "deep";
     };
 
-    # Unknown names expand to the empty string rather than failing.
-    testExpandUnknown = {
-      expr = (yamlVars.expand { A = "x$NOPE.y"; }).A;
+    # Unknown names are an eval error in strict mode (the default).
+    testExpandUnknownStrictThrows = {
+      expr = (builtins.tryEval (deepEval (yamlVars.expand { A = "x$NOPE.y"; }))).success;
+      expected = false;
+    };
+
+    # ... and expand to the empty string when strict mode is off.
+    testExpandUnknownLenient = {
+      expr = (yamlVars.expandWith false { A = "x$NOPE.y"; }).A;
+      expected = "x.y";
+    };
+
+    # Only the tainted attrs throw; independent ones still evaluate.
+    testExpandUnknownDoesNotPoisonOthers = {
+      expr =
+        (yamlVars.expand {
+          A = "$NOPE";
+          OK = "fine";
+        }).OK;
+      expected = "fine";
+    };
+
+    # load defaults to strict too.
+    testLoadStrictThrows = {
+      expr =
+        (builtins.tryEval (
+          deepEval (
+            yamlVars.load {
+              files = [ sample ];
+              extra.BAD = "$NOPE";
+            }
+          )
+        )).success;
+      expected = false;
+    };
+
+    testLoadStrictOff = {
+      expr =
+        (yamlVars.load {
+          files = [ sample ];
+          extra.BAD = "x$NOPE.y";
+          strict = false;
+        }).BAD;
       expected = "x.y";
     };
 
