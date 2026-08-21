@@ -1,7 +1,10 @@
 /*
   A small, project-agnostic library for reading `variables:` blocks out of
-  YAML files (GitLab CI templates, docker-compose files, plain YAML, ...)
-  and turning them into a flat attrset of strings suitable for `env`.
+  YAML files (GitLab CI templates, plain YAML, ...) and turning them into a
+  flat attrset of strings suitable for `env`.
+
+  Variable blocks must be mappings (`name: value`); list-style entries such as
+  docker-compose's `- NAME=value` environment lists are not supported.
 
   It makes no assumptions about file layout: every path is passed in by the
   caller.

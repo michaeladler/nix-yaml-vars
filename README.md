@@ -3,8 +3,11 @@
 [![CI](https://github.com/michaeladler/nix-yaml-vars/actions/workflows/ci.yml/badge.svg)](https://github.com/michaeladler/nix-yaml-vars/actions/workflows/ci.yml)
 
 A small, project-agnostic Nix library for reading `variables:` blocks out of
-YAML files (GitLab CI templates, docker-compose files, plain YAML, ...) and
-turning them into a flat attrset of strings, e.g. for devenv's `env`.
+YAML files (GitLab CI templates, plain YAML, ...) and turning them into a flat
+attrset of strings, e.g. for devenv's `env`.
+
+Variable blocks must be mappings (`name: value`). List-style entries such as
+docker-compose's `- NAME=value` environment lists are not supported.
 
 ## Usage
 
