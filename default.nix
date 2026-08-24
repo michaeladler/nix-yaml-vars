@@ -66,7 +66,19 @@ let
   fromYAML = path: fromYAML' (nameOf path) path;
 
   # `variables:` (or any other attr path) of a YAML file, {} if absent.
-  varsAt = attrPath: path: lib.attrByPath (toPath attrPath) { } (fromYAML path);
+  varsAt =
+    attrPath: path:
+    let
+      get =
+        attrs: keys:
+        if keys == [ ] then
+          attrs
+        else if builtins.isAttrs attrs && builtins.hasAttr (lib.head keys) attrs then
+          get attrs.${lib.head keys} (lib.tail keys)
+        else
+          { };
+    in
+    get (fromYAML path) (toPath attrPath);
 
   varsOf = varsAt defaultAttrPath;
 

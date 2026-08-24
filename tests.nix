@@ -29,6 +29,10 @@ let
       EXTRA_ONLY: "$APP/''${REGION}"
   '';
 
+  scalarIntermediate = pkgs.writeText "scalar-intermediate.yml" ''
+    parent: scalar
+  '';
+
   results = lib.runTests {
     testToStrBool = {
       expr = yamlVars.toStr true;
@@ -176,6 +180,11 @@ let
 
     testVarsAtMissing = {
       expr = yamlVars.varsAt [ "nope" ] sample;
+      expected = { };
+    };
+
+    testVarsAtScalarIntermediate = {
+      expr = yamlVars.varsAt [ "parent" "variables" ] scalarIntermediate;
       expected = { };
     };
 
