@@ -29,6 +29,14 @@ let
       EXTRA_ONLY: "$APP/''${REGION}"
   '';
 
+  unusualPath = pkgs.runCommand "unusual-yaml-path" { } ''
+    mkdir $out
+    cat > "$out/sample; false.yml" <<'EOF'
+    variables:
+      APP: demo
+    EOF
+  '';
+
   scalarIntermediate = pkgs.writeText "scalar-intermediate.yml" ''
     parent: scalar
   '';
@@ -186,6 +194,16 @@ let
     testVarsAtScalarIntermediate = {
       expr = yamlVars.varsAt [ "parent" "variables" ] scalarIntermediate;
       expected = { };
+    };
+
+    testFromYAMLUnusualPath = {
+      expr = (yamlVars.fromYAML (unusualPath + "/sample; false.yml")).variables.APP;
+      expected = "demo";
+    };
+
+    testFromYAMLSourcePath = {
+      expr = (yamlVars.fromYAML ./tests/fixtures/source-path.yml).variables.APP;
+      expected = "from-source-path";
     };
 
     # Later files win, and expansion sees the merged value.

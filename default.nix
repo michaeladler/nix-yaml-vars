@@ -58,7 +58,7 @@ let
     name: path:
     let
       json = pkgs.runCommand "${name}.json" { nativeBuildInputs = [ pkgs.yq-go ]; } ''
-        yq -o=json '.' ${path} > $out
+        yq -o=json '.' ${lib.escapeShellArg "${path}"} > $out
       '';
     in
     builtins.fromJSON (builtins.readFile json);
