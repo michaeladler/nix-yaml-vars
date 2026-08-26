@@ -220,18 +220,28 @@ let
         BUCKET = "demo-us-east-1-state";
         REPLICAS = "3";
         DEBUG = "false";
+        EMPTY = "";
         EXTRA_ONLY = "demo/us-east-1";
       };
     };
 
-    # EMPTY is dropped by default, kept with keepEmpty.
-    testLoadKeepEmpty = {
-      expr =
-        (yamlVars.load {
-          files = [ sample ];
-          keepEmpty = true;
-        }).EMPTY;
+    testLoadPreservesEmpty = {
+      expr = (yamlVars.load { files = [ sample ]; }).EMPTY;
       expected = "";
+    };
+
+    testLoadCanDropEmpty = {
+      expr = yamlVars.load {
+        files = [ sample ];
+        keepEmpty = false;
+      };
+      expected = {
+        APP = "demo";
+        REGION = "eu-central-1";
+        BUCKET = "demo-eu-central-1-state";
+        REPLICAS = "3";
+        DEBUG = "false";
+      };
     };
 
     testLoadExtraWinsLast = {

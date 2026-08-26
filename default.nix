@@ -159,7 +159,7 @@ rec {
     files      : list of YAML files to read, later ones override earlier ones
     extra      : attrset merged last, for values only known outside of CI
     attrPath   : where the variables live inside each file
-    keepEmpty  : keep variables that expand to "" (default: drop them)
+    keepEmpty  : keep variables that expand to "" (default: true)
     expandRefs : perform $VAR expansion (default: true)
     strict     : fail on references to undefined variables (default: true)
   */
@@ -168,7 +168,7 @@ rec {
       files ? [ ],
       extra ? { },
       attrPath ? defaultAttrPath,
-      keepEmpty ? false,
+      keepEmpty ? true,
       expandRefs ? true,
       strict ? defaultStrict,
     }:
